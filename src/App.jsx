@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 
 import { calculateSIP } from "./utils/sipCalculator";
+import { downloadSIPPDF, downloadSIPExcel } from "./utils/sipExport";
 
 
 function formatINR(value) {
@@ -850,6 +851,24 @@ function App() {
               </button>
 
             </div>
+
+            <div className="export-buttons">
+  <button
+    type="button"
+    className="text-button"
+    onClick={() => downloadSIPPDF(result)}
+  >
+    Download PDF
+  </button>
+
+  <button
+    type="button"
+    className="primary-button"
+    onClick={() => downloadSIPExcel(result)}
+  >
+    Download Excel
+  </button>
+</div>
 
           </div>
 

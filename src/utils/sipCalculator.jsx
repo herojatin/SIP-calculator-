@@ -27,37 +27,24 @@ export function calculateSIP({
     .sort((a, b) => a.year - b.year);
 
   /*
-    IMPORTANT:
-    This calculator follows the calculation method used
-    in the supplied PDF.
+    CALCULATION METHOD
 
-    The PDF does NOT compound the monthly return immediately.
+    The calculator follows the calculation method used
+    in the supplied SIP calculation reference.
 
-    Example:
+    Monthly SIP is added every month.
 
-    Year 1:
-      Month 1 balance = 10,000
-      Return = 10,000 × 10% / 12 = 83.33
+    Monthly return:
+        Current balance × monthly rate
 
-      Month 2 balance = 20,000
-      Return = 20,000 × 10% / 12 = 166.67
+    The return generated during a year is accumulated
+    separately.
 
-      ...
+    The accumulated return is added to the balance
+    only at the end of that year.
 
-      Month 12 balance = 1,20,000
-      Return = 1,20,000 × 10% / 12 = 1,000
-
-    Total Year 1 return ≈ ₹6,500
-
-    Then:
-
-      ₹1,20,000 + ₹6,500
-      = ₹1,26,500
-
-    Year 2 starts from ₹1,26,500.
-
-    The accumulated return of the current year is NOT
-    added to the balance until the end of that year.
+    Withdrawals are also processed at the end of the
+    selected year, after the yearly return is credited.
   */
 
   let balance = 0;
@@ -66,8 +53,11 @@ export function calculateSIP({
   let totalReturns = 0;
   let totalWithdrawn = 0;
 
-  // Return accumulated during the current year.
+  // Return accumulated during the current year
   let currentYearReturns = 0;
+
+  // Deposit accumulated during the current year
+  let currentYearDeposits = 0;
 
   const monthlyReport = [];
   const yearlyReport = [];
@@ -81,14 +71,12 @@ export function calculateSIP({
     // --------------------------------------------------
 
     balance += sip;
+
     totalDeposited += sip;
+    currentYearDeposits += sip;
 
     // --------------------------------------------------
-    // 2. Calculate return
-    //
-    // IMPORTANT:
-    // Return is calculated on the balance WITHOUT adding
-    // previous months' returns of the same year.
+    // 2. Calculate monthly return
     // --------------------------------------------------
 
     const returnEarned = balance * monthlyRate;
@@ -97,21 +85,20 @@ export function calculateSIP({
     totalReturns += returnEarned;
 
     // --------------------------------------------------
-    // 3. Current month withdrawal
-    //
-    // Withdrawals are processed at the END of the selected
-    // year, after the yearly return is added.
+    // 3. Default monthly values
     // --------------------------------------------------
 
     let withdrawalAmount = 0;
     const withdrawalDetails = [];
 
+    let monthEndBalance = balance;
+
     // --------------------------------------------------
-    // 4. End of year
+    // 4. End of year processing
     // --------------------------------------------------
 
     if (monthInYear === 12) {
-      // First add the accumulated yearly return
+      // Add accumulated return of the complete year
       balance += currentYearReturns;
 
       // Find withdrawals scheduled for this year
@@ -137,60 +124,19 @@ export function calculateSIP({
         });
       }
 
-      // Save yearly report
-      const yearStartMonth = (year - 1) * 12;
-      const yearMonths = monthlyReport.slice(
-        yearStartMonth,
-        yearStartMonth + 12
-      );
-
-      yearlyReport.push({
-        year,
-
-        // Amount invested during THIS year
-        sipThisYear: yearMonths.reduce(
-          (sum, row) => sum + row.amountDeposited,
-          0
-        ),
-
-        // CUMULATIVE amount invested
-        totalDeposited,
-
-        // Return generated during THIS year
-        returnsThisYear: currentYearReturns,
-
-        // CUMULATIVE return
-        totalReturns,
-
-        // Withdrawal during this year
-        withdrawal: withdrawalAmount,
-
-        // CUMULATIVE withdrawal
-        totalWithdrawn,
-
-        // Balance after yearly return + withdrawal
-        yearEndBalance: balance,
-
-        withdrawalDetails,
-      });
-
-      // Reset yearly return accumulator
-      currentYearReturns = 0;
-    }
-
-    // --------------------------------------------------
-    // Monthly report
-    //
-    // The PDF displays the balance BEFORE adding the
-    // current year's accumulated return, except on the
-    // 12th month where the yearly return is credited.
-    // --------------------------------------------------
-
-    let monthEndBalance = balance;
-
-    if (monthInYear !== 12) {
+      // Balance after yearly return and withdrawals
       monthEndBalance = balance;
     }
+
+    // --------------------------------------------------
+    // 5. Add monthly report FIRST
+    //
+    // IMPORTANT:
+    // The 12th month must be added before creating the
+    // yearly report. This fixes SIP This Year:
+    //
+    // ₹10,000 × 12 = ₹1,20,000
+    // --------------------------------------------------
 
     monthlyReport.push({
       month,
@@ -202,14 +148,56 @@ export function calculateSIP({
       // Cumulative deposits
       cumulativeDeposited: totalDeposited,
 
+      // Return generated in this month
       returnsEarned: returnEarned,
 
+      // Withdrawal made at year-end
       withdrawal: withdrawalAmount,
 
       withdrawalDetails,
 
+      // Balance after year-end processing on month 12
       monthEndBalance: Math.max(0, monthEndBalance),
     });
+
+    // --------------------------------------------------
+    // 6. Create yearly report AFTER month 12 is added
+    // --------------------------------------------------
+
+    if (monthInYear === 12) {
+      yearlyReport.push({
+        year,
+
+        // FIX:
+        // This is now calculated from all 12 months
+        // including month 12.
+        sipThisYear: currentYearDeposits,
+
+        // Cumulative amount invested
+        totalDeposited,
+
+        // Return generated during this year
+        returnsThisYear: currentYearReturns,
+
+        // Cumulative return
+        totalReturns,
+
+        // Withdrawal during this year
+        withdrawal: withdrawalAmount,
+
+        // Cumulative withdrawal
+        totalWithdrawn,
+
+        // Balance after yearly return + withdrawal
+        yearEndBalance: Math.max(0, balance),
+
+        withdrawalDetails,
+      });
+
+      // Reset yearly counters
+      currentYearDeposits = 0;
+      currentYearReturns = 0;
+    }
   }
 
   return {
