@@ -473,51 +473,46 @@ function App() {
 
           <div className="input-grid">
 
-            {/* Monthly SIP */}
+           {/* Monthly SIP */}
+<label className="field">
+  <span>Monthly SIP</span>
 
-            <label className="field">
+  <div className="input-prefix">
+    <img
+      src={aedSymbol}
+      alt="AED"
+      style={{
+        width: "14px",
+        height: "14px",
+        maxWidth: "14px",
+        maxHeight: "14px",
+        minWidth: "14px",
+        minHeight: "14px",
+        objectFit: "contain",
+        display: "inline-block",
+        flexShrink: 0,
+      }}
+    />
 
-              <span>
-                Monthly SIP
-              </span>
-
-              <div className="input-prefix">
-
-             <img
-  src={aedSymbol}
-  alt="AED"
-  style={{
-    width: "14px",
-    height: "14px",
-    maxWidth: "14px",
-    maxHeight: "14px",
-    minWidth: "14px",
-    minHeight: "14px",
-    objectFit: "contain",
-    display: "inline-block",
-    flexShrink: 0,
-  }}
-/>
-
-                <input
-                  type="number"
-                  min="0"
-                  step="500"
-                  value={
-                    monthlySIP
-                  }
-                  onChange={(e) =>
-                    setMonthlySIP(
-                      Number(
-                        e.target.value
-                      )
-                    )
-                  }
-                />
-
-              </div>
-
-            </label>
+    <input
+      type="text"
+      value={
+        monthlySIP !== "" && monthlySIP !== null && monthlySIP !== undefined
+          ? Number(monthlySIP).toLocaleString("en-US")
+          : ""
+      }
+      onChange={(e) => {
+        // Strip out any non-digit characters (including commas)
+        const rawValue = e.target.value.replace(/,/g, "");
+        if (rawValue === "") {
+          setMonthlySIP("");
+        } else if (!isNaN(rawValue)) {
+          setMonthlySIP(Number(rawValue));
+        }
+      }}
+    />
+  </div>
+</label>
 
 
             {/* Return */}
@@ -608,14 +603,10 @@ function App() {
               />
             }
             note={
-              <>
-                <AED
-                  value={monthlySIP}
-                />{" "}
-                × 12 × {years}
-              </>
-            }
-          />
+  <>
+    {monthlySIP ? Number(monthlySIP).toLocaleString("en-US") : 0} × 12 × {years}
+  </>
+}></MetricCard>
 
 
           <MetricCard
@@ -800,20 +791,23 @@ function App() {
 />
 
                 <input
-                  type="number"
-                  min="0"
-                  step="10000"
-                  value={
-                    withdrawalAmount
-                  }
-                  onChange={(e) =>
-                    setWithdrawalAmount(
-                      Number(
-                        e.target.value
-                      )
-                    )
-                  }
-                />
+  type="text"
+  value={
+    withdrawalAmount !== "" &&
+    withdrawalAmount !== null &&
+    withdrawalAmount !== undefined
+      ? Number(withdrawalAmount).toLocaleString("en-US")
+      : ""
+  }
+  onChange={(e) => {
+    const rawValue = e.target.value.replace(/,/g, "");
+    if (rawValue === "") {
+      setWithdrawalAmount("");
+    } else if (!isNaN(rawValue)) {
+      setWithdrawalAmount(Number(rawValue));
+    }
+  }}
+/>
 
               </div>
 
