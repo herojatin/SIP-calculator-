@@ -1,16 +1,60 @@
 import React, { useMemo, useState } from "react";
 
 import { calculateSIP } from "./utils/sipCalculator";
-import { downloadSIPPDF, downloadSIPExcel } from "./utils/sipExport";
+import {
+  downloadSIPPDF,
+  downloadSIPExcel,
+} from "./utils/sipExport";
+
+import aedSymbol from "./assets/aed-symbol.svg";
 
 
-function formatINR(value) {
-  return new Intl.NumberFormat("en-IN", {
-    style: "currency",
-    currency: "INR",
+function formatAED(value) {
+  return new Intl.NumberFormat("en-AE", {
     maximumFractionDigits: 0,
   }).format(Math.round(value || 0));
 }
+
+
+/*
+  AED Currency Display
+*/
+
+function AED({ value }) {
+  return (
+    <span
+      className="aed-value"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: "5px",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <img
+        src={aedSymbol}
+        alt="AED"
+        style={{
+          width: "14px",
+          height: "14px",
+          maxWidth: "14px",
+          maxHeight: "14px",
+          minWidth: "14px",
+          minHeight: "14px",
+          objectFit: "contain",
+          display: "inline-block",
+          flexShrink: 0,
+          verticalAlign: "middle",
+        }}
+      />
+
+      <span>
+        {formatAED(value)}
+      </span>
+    </span>
+  );
+}
+
 
 /*
   Summary card
@@ -41,6 +85,7 @@ function MetricCard({
   );
 }
 
+
 /*
   Growth chart
 */
@@ -51,11 +96,8 @@ function GrowthChart({ data }) {
   }
 
   const width = 900;
-
   const height = 300;
-
   const paddingX = 45;
-
   const paddingY = 30;
 
   const values = data.map(
@@ -200,6 +242,7 @@ function GrowthChart({ data }) {
   );
 }
 
+
 function App() {
 
   /*
@@ -221,6 +264,7 @@ function App() {
     setYears,
   ] = useState(20);
 
+
   /*
     Withdrawal state
   */
@@ -240,6 +284,7 @@ function App() {
     setWithdrawalAmount,
   ] = useState(1000000);
 
+
   /*
     Active report
   */
@@ -248,6 +293,7 @@ function App() {
     activeTab,
     setActiveTab,
   ] = useState("yearly");
+
 
   /*
     Calculate SIP whenever
@@ -269,6 +315,7 @@ function App() {
       withdrawals,
     ]
   );
+
 
   /*
     Add withdrawal
@@ -324,6 +371,7 @@ function App() {
     setWithdrawalAmount("");
   }
 
+
   /*
     Delete withdrawal
   */
@@ -338,6 +386,7 @@ function App() {
     );
   }
 
+
   /*
     Clear all withdrawals
   */
@@ -345,6 +394,7 @@ function App() {
   function clearWithdrawals() {
     setWithdrawals([]);
   }
+
 
   /*
     Return percentage
@@ -356,6 +406,7 @@ function App() {
           result.totalDeposited) *
         100
       : 0;
+
 
   return (
     <div className="app">
@@ -393,6 +444,7 @@ function App() {
 
       </header>
 
+
       <main className="container">
 
         {/* ================= INPUTS ================= */}
@@ -418,6 +470,7 @@ function App() {
 
           </div>
 
+
           <div className="input-grid">
 
             {/* Monthly SIP */}
@@ -430,7 +483,21 @@ function App() {
 
               <div className="input-prefix">
 
-                <span>₹</span>
+             <img
+  src={aedSymbol}
+  alt="AED"
+  style={{
+    width: "14px",
+    height: "14px",
+    maxWidth: "14px",
+    maxHeight: "14px",
+    minWidth: "14px",
+    minHeight: "14px",
+    objectFit: "contain",
+    display: "inline-block",
+    flexShrink: 0,
+  }}
+/>
 
                 <input
                   type="number"
@@ -451,6 +518,7 @@ function App() {
               </div>
 
             </label>
+
 
             {/* Return */}
 
@@ -484,6 +552,7 @@ function App() {
               </div>
 
             </label>
+
 
             {/* Years */}
 
@@ -524,36 +593,56 @@ function App() {
 
         </section>
 
+
         {/* ================= SUMMARY ================= */}
 
         <section className="summary-grid">
 
           <MetricCard
             label="Total Invested"
-            value={formatINR(
-              result.totalDeposited
-            )}
-            note={`${formatINR(
-              monthlySIP
-            )} × 12 × ${years}`}
+            value={
+              <AED
+                value={
+                  result.totalDeposited
+                }
+              />
+            }
+            note={
+              <>
+                <AED
+                  value={monthlySIP}
+                />{" "}
+                × 12 × {years}
+              </>
+            }
           />
+
 
           <MetricCard
             label="Total Returns"
-            value={formatINR(
-              result.totalReturns
-            )}
+            value={
+              <AED
+                value={
+                  result.totalReturns
+                }
+              />
+            }
             note={`${returnPercentage.toFixed(
               1
             )}% of total invested`}
             type="returns"
           />
 
+
           <MetricCard
             label="Total Withdrawn"
-            value={formatINR(
-              result.totalWithdrawn
-            )}
+            value={
+              <AED
+                value={
+                  result.totalWithdrawn
+                }
+              />
+            }
             note={
               withdrawals.length
                 ? `${
@@ -569,16 +658,22 @@ function App() {
             type="withdrawal"
           />
 
+
           <MetricCard
             label="Final Value"
-            value={formatINR(
-              result.finalValue
-            )}
+            value={
+              <AED
+                value={
+                  result.finalValue
+                }
+              />
+            }
             note="Value remaining at the end"
             type="final"
           />
 
         </section>
+
 
         {/* ================= CHART ================= */}
 
@@ -609,6 +704,7 @@ function App() {
           />
 
         </section>
+
 
         {/* ================= WITHDRAWALS ================= */}
 
@@ -647,6 +743,7 @@ function App() {
 
           </div>
 
+
           <div className="withdrawal-form">
 
             {/* Withdrawal Year */}
@@ -675,6 +772,7 @@ function App() {
 
             </label>
 
+
             {/* Withdrawal Amount */}
 
             <label className="field">
@@ -685,7 +783,21 @@ function App() {
 
               <div className="input-prefix">
 
-                <span>₹</span>
+               <img
+  src={aedSymbol}
+  alt="AED"
+  style={{
+    width: "14px",
+    height: "14px",
+    maxWidth: "14px",
+    maxHeight: "14px",
+    minWidth: "14px",
+    minHeight: "14px",
+    objectFit: "contain",
+    display: "inline-block",
+    flexShrink: 0,
+  }}
+/>
 
                 <input
                   type="number"
@@ -707,6 +819,7 @@ function App() {
 
             </label>
 
+
             <button
               className="primary-button"
               onClick={
@@ -717,6 +830,7 @@ function App() {
             </button>
 
           </div>
+
 
           {/* Withdrawal list */}
 
@@ -764,9 +878,11 @@ function App() {
                       </div>
 
                       <strong>
-                        {formatINR(
-                          item.amount
-                        )}
+                        <AED
+                          value={
+                            item.amount
+                          }
+                        />
                       </strong>
 
                       <button
@@ -790,6 +906,7 @@ function App() {
           )}
 
         </section>
+
 
         {/* ================= REPORT ================= */}
 
@@ -815,6 +932,7 @@ function App() {
               </div>
 
             </div>
+
 
             <div className="tabs">
 
@@ -852,25 +970,33 @@ function App() {
 
             </div>
 
-            <div className="export-buttons">
-  <button
-    type="button"
-    className="text-button"
-    onClick={() => downloadSIPPDF(result)}
-  >
-    Download PDF
-  </button>
 
-  <button
-    type="button"
-    className="primary-button"
-    onClick={() => downloadSIPExcel(result)}
-  >
-    Download Excel
-  </button>
-</div>
+            <div className="export-buttons">
+
+              <button
+                type="button"
+                className="text-button"
+                onClick={() =>
+                  downloadSIPPDF(result)
+                }
+              >
+                Download PDF
+              </button>
+
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() =>
+                  downloadSIPExcel(result)
+                }
+              >
+                Download Excel
+              </button>
+
+            </div>
 
           </div>
+
 
           {/* ================= YEARLY ================= */}
 
@@ -913,6 +1039,7 @@ function App() {
 
                 </thead>
 
+
                 <tbody>
 
                   {result.yearlyReport.map(
@@ -932,33 +1059,48 @@ function App() {
                           {row.year}
                         </td>
 
-                        <td>
-                          {formatINR(
-                            row.sipThisYear
-                          )}
-                        </td>
 
                         <td>
-                          {formatINR(
-                            row.totalDeposited
-                          )}
+                          <AED
+                            value={
+                              row.sipThisYear
+                            }
+                          />
                         </td>
 
+
                         <td>
-                          {formatINR(
-                            row.returnsThisYear
-                          )}
+                          <AED
+                            value={
+                              row.totalDeposited
+                            }
+                          />
                         </td>
+
+
+                        <td>
+                          <AED
+                            value={
+                              row.returnsThisYear
+                            }
+                          />
+                        </td>
+
 
                         <td>
 
                           {row.withdrawal >
                           0 ? (
                             <span className="withdrawal-value">
+
                               −{" "}
-                              {formatINR(
-                                row.withdrawal
-                              )}
+
+                              <AED
+                                value={
+                                  row.withdrawal
+                                }
+                              />
+
                             </span>
                           ) : (
                             "—"
@@ -966,10 +1108,15 @@ function App() {
 
                         </td>
 
+
                         <td className="balance-cell">
-                          {formatINR(
-                            row.yearEndBalance
-                          )}
+
+                          <AED
+                            value={
+                              row.yearEndBalance
+                            }
+                          />
+
                         </td>
 
                       </tr>
@@ -979,6 +1126,7 @@ function App() {
 
                 </tbody>
 
+
                 <tfoot>
 
                   <tr>
@@ -987,34 +1135,49 @@ function App() {
                       Total
                     </th>
 
-                    <th>
-                      {formatINR(
-                        result.totalDeposited
-                      )}
-                    </th>
 
                     <th>
-                      {formatINR(
-                        result.totalDeposited
-                      )}
+                      <AED
+                        value={
+                          result.totalDeposited
+                        }
+                      />
                     </th>
 
-                    <th>
-                      {formatINR(
-                        result.totalReturns
-                      )}
-                    </th>
 
                     <th>
-                      {formatINR(
-                        result.totalWithdrawn
-                      )}
+                      <AED
+                        value={
+                          result.totalDeposited
+                        }
+                      />
                     </th>
 
+
                     <th>
-                      {formatINR(
-                        result.finalValue
-                      )}
+                      <AED
+                        value={
+                          result.totalReturns
+                        }
+                      />
+                    </th>
+
+
+                    <th>
+                      <AED
+                        value={
+                          result.totalWithdrawn
+                        }
+                      />
+                    </th>
+
+
+                    <th>
+                      <AED
+                        value={
+                          result.finalValue
+                        }
+                      />
                     </th>
 
                   </tr>
@@ -1069,6 +1232,7 @@ function App() {
 
                 </thead>
 
+
                 <tbody>
 
                   {result.monthlyReport.map(
@@ -1088,37 +1252,53 @@ function App() {
                           {row.month}
                         </td>
 
+
                         <td>
                           {row.year}
                         </td>
 
-                        <td>
-                          {formatINR(
-                            row.amountDeposited
-                          )}
-                        </td>
 
                         <td>
-                          {formatINR(
-                            row.cumulativeDeposited
-                          )}
+                          <AED
+                            value={
+                              row.amountDeposited
+                            }
+                          />
                         </td>
 
+
                         <td>
-                          {formatINR(
-                            row.returnsEarned
-                          )}
+                          <AED
+                            value={
+                              row.cumulativeDeposited
+                            }
+                          />
                         </td>
+
+
+                        <td>
+                          <AED
+                            value={
+                              row.returnsEarned
+                            }
+                          />
+                        </td>
+
 
                         <td>
 
                           {row.withdrawal >
                           0 ? (
                             <span className="withdrawal-value">
+
                               −{" "}
-                              {formatINR(
-                                row.withdrawal
-                              )}
+
+                              <AED
+                                value={
+                                  row.withdrawal
+                                }
+                              />
+
                             </span>
                           ) : (
                             "—"
@@ -1126,10 +1306,15 @@ function App() {
 
                         </td>
 
+
                         <td className="balance-cell">
-                          {formatINR(
-                            row.monthEndBalance
-                          )}
+
+                          <AED
+                            value={
+                              row.monthEndBalance
+                            }
+                          />
+
                         </td>
 
                       </tr>
@@ -1146,6 +1331,7 @@ function App() {
           )}
 
         </section>
+
 
         {/* ================= EXPLANATION ================= */}
 
@@ -1173,6 +1359,7 @@ function App() {
 
       </main>
 
+
       <footer>
         SIP Calculator • React
       </footer>
@@ -1181,5 +1368,5 @@ function App() {
   );
 }
 
-export default App;
 
+export default App;

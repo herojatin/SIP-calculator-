@@ -1,4 +1,3 @@
-
 // src/utils/sipExport.js
 
 import * as XLSX from "xlsx-js-style";
@@ -10,7 +9,7 @@ import autoTable from "jspdf-autotable";
 ===================================================== */
 
 function formatNumber(value) {
-  return Number(value || 0).toLocaleString("en-IN", {
+  return Number(value || 0).toLocaleString("en-AE", {
     maximumFractionDigits: 0,
   });
 }
@@ -49,6 +48,8 @@ function formatExcelSheet(sheet, columnWidths) {
       }
 
       cell.s = {
+        ...(cell.s || {}),
+
         alignment: {
           horizontal: "center",
           vertical: "center",
@@ -75,15 +76,52 @@ function formatExcelSheet(sheet, columnWidths) {
     }
 
     cell.s = {
+      ...(cell.s || {}),
+
       font: {
         bold: true,
       },
+
       alignment: {
         horizontal: "center",
         vertical: "center",
         wrapText: true,
       },
     };
+  }
+}
+
+/* =====================================================
+   APPLY AED FORMAT TO EXCEL CELLS
+===================================================== */
+
+function applyAEDFormat(sheet, columns) {
+  if (!sheet["!ref"]) {
+    return;
+  }
+
+  const range = XLSX.utils.decode_range(sheet["!ref"]);
+
+  for (let row = range.s.r; row <= range.e.r; row++) {
+    // Skip header row
+    if (row === 0) {
+      continue;
+    }
+
+    columns.forEach((col) => {
+      const cellAddress = XLSX.utils.encode_cell({
+        r: row,
+        c: col,
+      });
+
+      const cell = sheet[cellAddress];
+
+      if (!cell || typeof cell.v !== "number") {
+        return;
+      }
+
+      cell.z = '"AED" #,##0';
+    });
   }
 }
 
@@ -123,6 +161,22 @@ export function downloadSIPExcel(result) {
     30,
     25,
   ]);
+
+  // Apply AED formatting to summary values
+  [1].forEach((col) => {
+    for (let row = 2; row <= 5; row++) {
+      const cellAddress = XLSX.utils.encode_cell({
+        r: row,
+        c: col,
+      });
+
+      const cell = summarySheet[cellAddress];
+
+      if (cell && typeof cell.v === "number") {
+        cell.z = '"AED" #,##0';
+      }
+    }
+  });
 
   XLSX.utils.book_append_sheet(
     workbook,
@@ -170,14 +224,36 @@ export function downloadSIPExcel(result) {
     XLSX.utils.json_to_sheet(yearlyData);
 
   formatExcelSheet(yearlySheet, [
-    10, // Year
-    20, // SIP This Year
-    20, // Total Deposited
-    22, // Returns This Year
-    20, // Total Returns
-    18, // Withdrawal
-    20, // Total Withdrawn
-    23, // Year End Balance
+    10,
+    20,
+    20,
+    22,
+    20,
+    18,
+    20,
+    23,
+  ]);
+
+  /*
+    Columns:
+    0 = Year
+    1 = SIP This Year
+    2 = Total Deposited
+    3 = Returns This Year
+    4 = Total Returns
+    5 = Withdrawal
+    6 = Total Withdrawn
+    7 = Year End Balance
+  */
+
+  applyAEDFormat(yearlySheet, [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
   ]);
 
   XLSX.utils.book_append_sheet(
@@ -222,14 +298,34 @@ export function downloadSIPExcel(result) {
     XLSX.utils.json_to_sheet(monthlyData);
 
   formatExcelSheet(monthlySheet, [
-    12, // Month
-    10, // Year
-    18, // Month in Year
-    21, // Amount Deposited
-    23, // Cumulative Deposited
-    20, // Returns Earned
-    18, // Withdrawal
-    23, // Month End Balance
+    12,
+    10,
+    18,
+    21,
+    23,
+    20,
+    18,
+    23,
+  ]);
+
+  /*
+    Columns:
+    0 = Month
+    1 = Year
+    2 = Month in Year
+    3 = Amount Deposited
+    4 = Cumulative Deposited
+    5 = Returns Earned
+    6 = Withdrawal
+    7 = Month End Balance
+  */
+
+  applyAEDFormat(monthlySheet, [
+    3,
+    4,
+    5,
+    6,
+    7,
   ]);
 
   XLSX.utils.book_append_sheet(
@@ -283,7 +379,7 @@ export function downloadSIPPDF(result) {
   doc.setFontSize(10);
 
   doc.text(
-    `Total Deposited: Rs. ${formatNumber(
+    `Total Deposited: AED ${formatNumber(
       totalDeposited
     )}`,
     14,
@@ -291,7 +387,7 @@ export function downloadSIPPDF(result) {
   );
 
   doc.text(
-    `Total Returns: Rs. ${formatNumber(
+    `Total Returns: AED ${formatNumber(
       totalReturns
     )}`,
     75,
@@ -299,7 +395,7 @@ export function downloadSIPPDF(result) {
   );
 
   doc.text(
-    `Total Withdrawn: Rs. ${formatNumber(
+    `Total Withdrawn: AED ${formatNumber(
       totalWithdrawn
     )}`,
     140,
@@ -307,7 +403,7 @@ export function downloadSIPPDF(result) {
   );
 
   doc.text(
-    `Final Value: Rs. ${formatNumber(
+    `Final Value: AED ${formatNumber(
       finalValue
     )}`,
     220,
@@ -329,22 +425,28 @@ export function downloadSIPPDF(result) {
   const yearlyRows = yearlyReport.map(
     (row) => [
       row.year,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.sipThisYear
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.totalDeposited
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.returnsThisYear
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.totalReturns
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.withdrawal
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.yearEndBalance
       )}`,
     ]
@@ -400,21 +502,28 @@ export function downloadSIPPDF(result) {
   const monthlyRows = monthlyReport.map(
     (row) => [
       row.month,
+
       row.year,
+
       row.monthInYear,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.amountDeposited
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.cumulativeDeposited
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.returnsEarned
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.withdrawal
       )}`,
-      `Rs. ${formatNumber(
+
+      `AED ${formatNumber(
         row.monthEndBalance
       )}`,
     ]
@@ -462,4 +571,3 @@ export function downloadSIPPDF(result) {
     "SIP-Investment-Report.pdf"
   );
 }
-
